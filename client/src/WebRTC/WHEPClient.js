@@ -7,10 +7,11 @@ import negotiateConnectionWithClientOffer from "./negotiateConnectionWithClientO
  * https://www.ietf.org/id/draft-murillo-whep-00.html
  */
 export default class WHEPClient {
-    constructor(endpoint, videoElement, socket) {
+    constructor(endpoint, videoElement, socket, failedCallback) {
         this.endpoint = endpoint;
         this.videoElement = videoElement;
         this.socket = socket;
+        this.failedCallback = failedCallback;
         this.stream = new MediaStream();
         /**
          * Create a new WebRTC connection, using public STUN servers with ICE,
@@ -68,7 +69,7 @@ export default class WHEPClient {
         this.peerConnection.addEventListener("connectionstatechange", (ev) => {
             console.log("connection state changed to " + this.peerConnection.connectionState);
             if (this.peerConnection.connectionState === "failed") {
-                location.reload();
+                failedCallback();
                 return;
             }
             if (this.peerConnection.connectionState !== "connected") {

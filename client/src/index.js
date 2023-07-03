@@ -35,9 +35,11 @@ function handleDisconnect() {
     // show setup view, hide video view
     document.getElementById("setup-view").style.display = "flex";
     document.getElementById("video-view").style.display = "none";
-    // reload website
-    location.reload();
-
+    // get room id from storage
+    const roomId = localStorage.getItem("room_id");
+    self.client = undefined;
+    const videoElement = document.getElementById("remote-video");
+    videoElement.srcObject = undefined;
 }
 
 function requestWebRTCURL() {
@@ -47,7 +49,10 @@ function requestWebRTCURL() {
 function createWebRTCConnection(url) {
     console.log(url);
     const videoElement = document.getElementById("remote-video");
-    self.client = new WHEPClient(url, videoElement, socket);
+    videoElement.srcObject = undefined;
+    self.client = new WHEPClient(url, videoElement, socket, () => {
+        createWebRTCConnection(url);
+    });
 }
 
 function handleMessage(message) {
@@ -65,6 +70,7 @@ function handleMessage(message) {
         case "logout":
             // remove room id from storage
             localStorage.removeItem("room_id");
+            location.reload();
             break;
 
     }
