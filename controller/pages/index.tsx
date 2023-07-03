@@ -2,6 +2,7 @@ import {signIn, signOut, useSession} from "next-auth/react";
 import {useEffect, useState} from "react";
 import {Socket, io} from "socket.io-client";
 import {MaterialSymbol} from "react-material-symbols";
+import {set} from "zod";
 
 const socket_url = "http://localhost:3000";
 
@@ -24,7 +25,22 @@ export default function Home() {
 
   const connectToSocket = () => {
       console.log("connect to socket");
-      setSocket((e) => {
+      const _socket = io(socket_url, {
+          extraHeaders: {
+              Authorization: `${socketToken}`
+          }
+      });
+      _socket.on("connect", handleConnect);
+      _socket.on("disconnect", handleDisconnect);
+      _socket.on("message", handleMessage);
+      _socket.on("clients", getClients);
+      _socket.on("client_connected", handleClientConnected);
+      _socket.on("client_disconnected", handleClientDisconnected);
+      _socket.on("client_rtc_toggle", handleClientRTCToggle);
+      _socket.on("client_playing_toggle", handleClientPlayingToggle);
+      _socket.on("client_projector_change", handleClientProjectorChange);
+      setSocket(_socket);
+      /*setSocket((e) => {
           const _socket = io(socket_url, {
               extraHeaders: {
                   Authorization: `${socketToken}`
@@ -32,15 +48,15 @@ export default function Home() {
           });
           _socket.on("connect", handleConnect);
           _socket.on("disconnect", handleDisconnect);
-          _socket.on("message", handleMessage);
-          _socket.on("clients", getClients);
-          _socket.on("client_connected", handleClientConnected);
-          _socket.on("client_disconnected", handleClientDisconnected);
-          _socket.on("client_rtc_toggle", handleClientRTCToggle);
-          _socket.on("client_playing_toggle", handleClientPlayingToggle);
-          _socket.on("client_projector_change", handleClientProjectorChange);
+          //_socket.on("message", handleMessage);
+          //_socket.on("clients", getClients);
+          //_socket.on("client_connected", handleClientConnected);
+          //_socket.on("client_disconnected", handleClientDisconnected);
+          //_socket.on("client_rtc_toggle", handleClientRTCToggle);
+          //_socket.on("client_playing_toggle", handleClientPlayingToggle);
+          //_socket.on("client_projector_change", handleClientProjectorChange);
           return _socket;
-      })
+      });*/
 
   };
 
@@ -140,7 +156,7 @@ export default function Home() {
 
   if (!session) {
     return (
-        <div className={"w-full h-full flex justify-center items-center"}>
+        <div className={"w-full dark:bg-gray-900 h-full flex justify-center items-center"}>
           <button className={"px-10 py-3 rounded-lg bg-gray-100 dark:bg-gray-800 shadow-2xl border-2 dark:border-gray-600 text-3xl font-semibold"} onClick={() => {signIn("authentik")}}>Sign In</button>
         </div>
     )
@@ -148,22 +164,22 @@ export default function Home() {
 
   if (!connected) {
     return (
-        <div className={"flex flex-col items-center m-8"}>
-          <h1>Token eingeben</h1>
-          <input className={"px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded-md mt-2"} placeholder={"Token"} value={socketToken} onChange={(e) => {
-            setSocketToken(e.target.value);
-          }} />
-            <button className={"mt-2 bg-blue-500 rounded-md px-4 py-2"} onClick={() => connectToSocket()}>Anmelden</button>
+        <div className={"flex flex-col items-center m-8 dark:text-white"}>
+            <h1>Token eingeben</h1>
+            <input className={"px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded-md mt-2"} placeholder={"Token"} value={socketToken} onChange={(e) => {
+                setSocketToken(e.target.value);
+            }} />
+            <button className={"mt-2 bg-blue-500 rounded-md px-4 py-2 text-white"} onClick={() => connectToSocket()}>Anmelden</button>
         </div>
     )
   }
 
   return (
   <main>
-    <div className={"m-8 grid lg:grid-cols-4 md:grid-cols-3 xm:grid-cols-1 gap-4"}>
+    <div className={"m-8 grid lg:grid-cols-4 md:grid-cols-3 xm:grid-cols-1 gap-4 dark:text-white"}>
         {allRooms.map((room) => (
             <div key={room.room_id} className={`${room.connected ? "justify-between" : ""} items-center p-4 bg-gray-200 dark:bg-gray-800 rounded-md`}>
-                <h1 className={"font-semibold text-lg"}>Raum {room.room_id}</h1>
+                <h1 className={"font-semibold text-lg mb-1"}>Raum {room.room_id}</h1>
                 <div className={"flex items-center justify-between"}>
                     <div className={"flex items-center"}>
                         <div className={`w-4 h-4 rounded-full ${room.connected ? "bg-green-500" : "bg-red-500"} mr-2`} />
