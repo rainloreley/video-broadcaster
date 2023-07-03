@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="./main.css">
+        <title>Client</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+        <script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
+
+    </head>
+    <body>
+        <div id="setup-view">
+            <div style="display: flex; flex-direction: column; align-items: center">
+                <h1>Raumnummer eingeben</h1>
+                <input id="room-id" type="text" placeholder="Raumnummer" />
+                <button id="join-button">Beitreten</button>
+            </div>
+        </div>
+        <div id="video-view">
+            <video id="remote-video" autoplay></video>
+        </div>
+        <script type="module" src="./src/index.js"></script>
+    </body>
+</html>

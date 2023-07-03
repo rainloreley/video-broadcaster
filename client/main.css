@@ -1,0 +1,45 @@
+body {
+    background-color: #090909;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    overflow: hidden;
+}
+
+#setup-view {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+}
+
+#room-id {
+    width: 60%;
+    border-radius: 8px;
+    background-color: #222;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 8px 12px;
+}
+
+#join-button {
+    margin-top: 16px;
+    background-color: #007aff;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: white;
+    border: 1px solid #007aff;
+}
+
+#video-view {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+}
+
+#remote-video {
+    width: 100%;
+    height: 100%;
+}
