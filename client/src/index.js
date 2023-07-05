@@ -21,6 +21,7 @@ function joinRoom(roomId) {
     socket.on("disconnect", handleDisconnect);
     socket.on("message", handleMessage);
     socket.on("webrtcurl", createWebRTCConnection);
+    socket.on("mute_toggle", handleMuteToggle);
 }
 
 function handleConnect() {
@@ -50,6 +51,7 @@ function createWebRTCConnection(url) {
     console.log(url);
     const videoElement = document.getElementById("remote-video");
     videoElement.srcObject = undefined;
+    socket.emit("update_mute_status", videoElement.muted);
     self.client = new WHEPClient(url, videoElement, socket, () => {
         createWebRTCConnection(url);
     });
@@ -72,10 +74,20 @@ function handleMessage(message) {
             localStorage.removeItem("room_id");
             location.reload();
             break;
+        case "mute":
+
 
     }
+}
 
-
+function handleMuteToggle(message) {
+    const videoElement = document.getElementById("remote-video");
+    if (videoElement.muted === message) {
+        socket.emit("update_mute_status", document.getElementById("remote-video").muted);
+    }
+    else {
+        videoElement.muted = message;
+    }
 }
 
 // auto connect if room id is saved in storage
@@ -99,10 +111,19 @@ document.getElementById("remote-video").addEventListener("pause", () => {
     }
 });
 
+// listen to changes in video mute
+document.getElementById("remote-video").addEventListener("volumechange", () => {
+    console.log("volumechange");
+    if (socket !== undefined) {
+        socket.emit("update_mute_status", document.getElementById("remote-video").muted);
+    }
+});
+
 // add event listener for when screen width changes
 window.addEventListener("resize", reportScreenWidth);
 
 document.getElementById("join-button").addEventListener("click", joinRoom);
+
 
 function reportScreenWidth() {
     console.log("reporting screen width of " + window.innerWidth);

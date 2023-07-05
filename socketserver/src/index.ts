@@ -7,7 +7,7 @@ import {createHash} from "crypto";
 import dotenv from "dotenv";
 dotenv.config();
 
-const roomIds = ["004", "006", "007", "101", "102", "103", "107", "108", "109", "110", "111", "208", "209", "210", "211", "213", "214", "215", "301", "303", "304", "306", "307", "308", "309", "310", "311", "401", "402", "501", "503", "504", "505", "506", "507", "603", "604", "612", "F01", "F02", "F03", "F04"];
+const roomIds = ["004", "007", "008", "101", "102", "103", "107", "108", "109", "110", "111", "208", "209", "210", "211", "213", "214", "215", "301", "303", "304", "306", "307", "308", "309", "310", "311", "401", "402", "501", "503", "504", "505", "506", "507", "603", "604", "612", "F01", "F02", "F03", "F04"];
 
 const app = express();
 const server = http.createServer(app);
@@ -46,14 +46,14 @@ io.on("connection", (socket) => {
             // remove user from connectedUsers
             connectedUsers = connectedUsers.filter((user) => user.socket.id !== socketToDisconnect?.id);
             // add new socket to connectedUsers
-            connectedUsers.push({socket: socket, room: room, rtcloaded: false, playing: false, onprojector: false});
+            connectedUsers.push({socket: socket, room: room, rtcloaded: false, playing: false, onprojector: false, muted: false});
             if (connectedStreamComputer) {
                 connectedStreamComputer?.emit("client_connected", room);
             }
         }
         else {
             console.log("Room " + room + " connected");
-            connectedUsers.push({socket: socket, room: room, rtcloaded: false, playing: false, onprojector: false});
+            connectedUsers.push({socket: socket, room: room, rtcloaded: false, playing: false, onprojector: false, muted: false});
             if (connectedStreamComputer !== undefined) {
                 connectedStreamComputer.emit("client_connected", room);
             }
@@ -79,7 +79,8 @@ io.on("connection", (socket) => {
                 return {room_id: id, connected: connectedUsers.find((user) => user.room === id) !== undefined,
                     playing: connectedUsers.find((user) => user.room === id)?.playing ?? false,
                     rtcloaded: connectedUsers.find((user) => user.room === id)?.rtcloaded ?? false,
-                    onprojector: connectedUsers.find((user) => user.room === id)?.onprojector ?? false};
+                    onprojector: connectedUsers.find((user) => user.room === id)?.onprojector ?? false,
+                    muted: connectedUsers.find((user) => user.room === id)?.muted ?? false};
             });
             connectedStreamComputer.emit("clients", JSON.stringify(rooms));
             console.log("Stream computer connected");
@@ -104,7 +105,21 @@ io.on("connection", (socket) => {
                     // remove room from connectedUsers
                     connectedUsers = connectedUsers.filter((user) => user.room !== room);
                     break;
-
+                case "mute":
+                    const newState = splittedMessage[1];
+                    const roomToMute = splittedMessage[2];
+                    if (typeof roomToMute !== "string") break;
+                    // find connected room with id
+                    const connectedRoomToMute = connectedUsers.find((user) => user.room === roomToMute);
+                    // send mute message to connected room
+                    connectedRoomToMute?.socket.emit("mute_toggle", newState === "true");
+                    // update connectedUsers
+                    connectedUsers = connectedUsers.map((user) => {
+                        if (user.room === roomToMute) {
+                            user.muted = newState === "true";
+                        }
+                        return user;
+                    });
             }
         }
         else {
@@ -146,6 +161,19 @@ io.on("connection", (socket) => {
             user.onprojector = isProjectorWidth;
             if (connectedStreamComputer) {
                 connectedStreamComputer?.emit("client_projector_change", JSON.stringify({room: user.room, onprojector: isProjectorWidth}));
+            }
+        }
+    });
+
+    // handle mute status update
+    socket.on("update_mute_status", (message: boolean) => {
+        console.log("update_mute_status")
+        // update "muted" variable for the user that sent that message
+        const user = connectedUsers.find((user) => user.socket.id === socket.id);
+        if (user) {
+            user.muted = message;
+            if (connectedStreamComputer) {
+                connectedStreamComputer?.emit("client_mute_toggle", JSON.stringify({room: user.room, muted: message}));
             }
         }
     });
@@ -194,6 +222,7 @@ interface Room {
     rtcloaded: boolean;
     playing: boolean;
     onprojector: boolean;
+    muted: boolean;
 }
 
 // Connected User struct to keep track of connected users
@@ -203,4 +232,5 @@ interface ConnectedUser {
     rtcloaded: boolean;
     playing: boolean;
     onprojector: boolean;
+    muted: boolean;
 }

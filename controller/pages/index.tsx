@@ -12,6 +12,7 @@ interface Room {
     rtcloaded: boolean;
     playing: boolean;
     onprojector: boolean;
+    muted: boolean;
 }
 
 export default function Home() {
@@ -39,6 +40,7 @@ export default function Home() {
       _socket.on("client_rtc_toggle", handleClientRTCToggle);
       _socket.on("client_playing_toggle", handleClientPlayingToggle);
       _socket.on("client_projector_change", handleClientProjectorChange);
+      _socket.on("client_mute_toggle", handleClientMuteToggle);
       setSocket(_socket);
       /*setSocket((e) => {
           const _socket = io(socket_url, {
@@ -150,8 +152,26 @@ export default function Home() {
         });
   }
 
+  const handleClientMuteToggle = (message: any) => {
+    const data = JSON.parse(message) as {room: string, muted: boolean};
+        // update room to playing
+        setAllRooms((e) => {
+            const newArray = [... e];
+            const index = newArray.findIndex((room) => room.room_id === data.room);
+            console.log(index);
+            if (index !== -1) {
+                newArray[index].muted = data.muted;
+            }
+            return newArray;
+        });
+  }
+
   const logoutRoom = (room: string) => {
       socket!.emit("streamer_message", "logout_" + room);
+  }
+
+  const muteToggleRoom = (room: string, muted: boolean) => {
+      socket?.emit("streamer_message", "mute_" + muted + "_" + room);
   }
 
   if (!session) {
@@ -186,6 +206,12 @@ export default function Home() {
                         <MaterialSymbol icon={`${room.rtcloaded ? "sensors" : "sensors_off"}`} size={25} color={`${room.rtcloaded ? "green" : "red"}`} className={"ml-0.5"} />
                         <MaterialSymbol icon={`${room.playing ? "play_arrow": "play_disabled"}`} size={25} color={`${room.playing ? "green" : "red"}`} className={"ml-0.5"} />
                         <MaterialSymbol icon={"connected_tv"} size={25} color={`${room.onprojector ? "green" : "red"}`} className={"ml-0.5"} />
+                        {room.connected ? (
+                            <button className={"w-[25px] h-[25px]"} onClick={() => {
+                                muteToggleRoom(room.room_id, !room.muted);
+                            }}><MaterialSymbol icon={`${room.muted ? "volume_off" : "volume_up"}`} size={25} color={`${room.muted ? "red" : "green"}`} className={"ml-0.5"} />
+                            </button>
+                        ) : (<div />)}
                     </div>
                     {room.connected ? (
                         <button className={"w-[20px] h-[20px]"} onClick={() => {
